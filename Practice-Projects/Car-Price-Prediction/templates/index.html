@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="static/css/style.css">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <title>Car Price Prediction</title>
+</head>
+<body class="bg-dark">
+<div class="container">
+    <div class="row">
+        <div class="card mt-5" style="width: 100%; height: 100%;">
+            <div class="card-header">
+                <div class="col-12" style="text-align: center;">
+                    <h1>Welcome to Car Price Prediction App</h1>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <form method="post" action="#" accept-charset="utf-8">
+                    <div class="col-10 form-group" style="text-align: center;">
+                        <label><b>Select Company</b></label>
+                        <select class="selectpicker form-control" name="Company" id="Company" required onchange="loadCarModels()">
+                            <option value="">Select Company</option>
+                            {% for company in companies %}
+                                <option value="{{ company }}">{{ company }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-10 form-group" style="text-align: center;">
+                        <label><b>Select Model</b></label>
+                        <select class="selectpicker form-control" name="Model" id="Model" required>
+                            <option value="">Select Model</option>
+                        </select>
+                    </div>
+                    <div class="col-10 form-group" style="text-align: center;">
+                        <label><b>Select Year</b></label>
+                        <select class="selectpicker form-control" name="Year" id="Year" required>
+                            {% for year in years %}
+                                <option value="{{ year }}">{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-10 form-group" style="text-align: center;">
+                        <label for="KMs_Driven"><b>Select KMs Driven</b></label>
+                        <input type="range" name="KMs_Driven" id="KMs_Driven" class="form-control-range" min="0" max="300000" step="1000" value="50000" oninput="updateKMsDrivenValue(this.value)">
+                        <p>Selected KMs Driven: <span id="kmsValue">50000</span></p>
+                    </div>
+                    <div class="col-10 form-group" style="text-align: center;">
+                        <label><b>Select Fuel Type</b></label>
+                        <select class="selectpicker form-control" name="Fuel_Type" id="Fuel_Type" required>
+                            {% for fuel_type in fuel_types %}
+                                <option value="{{ fuel_type }}">{{ fuel_type }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-10 form-group" style="text-align: center;">
+                        <button type="button" class="btn btn-primary" onclick="predictPrice()">Predict Price</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Spinner and Message -->
+<div id="loadingSpinner" class="text-center">
+    <div class="spinner-border" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+    <p id="loadingMessage">Predicting price, please wait...</p>
+</div>
+
+<script>
+    function loadCarModels() {
+        const company = document.getElementById("Company").value;
+        const modelSelect = document.getElementById("Model");
+
+        modelSelect.innerHTML = "<option value=''>Select Model</option>";
+
+        if (company) {
+            fetch(`/get_models?company=${company}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.models.forEach(function(model) {
+                        const option = document.createElement("option");
+                        option.value = model;
+                        option.textContent = model;
+                        modelSelect.appendChild(option);
+                    });
+                });
+        }
+    }
+
+    function updateKMsDrivenValue(value) {
+        document.getElementById('kmsValue').innerText = value;
+    }
+
+    function predictPrice() {
+        const company = document.getElementById("Company").value;
+        const model = document.getElementById("Model").value;
+        const year = document.getElementById("Year").value;
+        const kmsDriven = document.getElementById("KMs_Driven").value;
+        const fuelType = document.getElementById("Fuel_Type").value;
+
+        // Show loading spinner and message
+        document.getElementById('loadingSpinner').style.display = 'block';
+
+        fetch(`/predict_price?company=${company}&model=${model}&year=${year}&kmsDriven=${kmsDriven}&fuelType=${fuelType}`)
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading spinner and message
+                document.getElementById('loadingSpinner').style.display = 'none';
+                
+                alert(`Predicted Price: ${data.price}`);
+            })
+            .catch(error => {
+                // Hide loading spinner and message in case of error
+                document.getElementById('loadingSpinner').style.display = 'none';
+                
+                alert('An error occurred while predicting the price.');
+            });
+    }
+</script>
+
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.3/dist/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+</body>
+</html>
